@@ -25,7 +25,8 @@ export default {
           identifier: '',
           password: ''
         },
-        images: { // Optional
+        images: ['post.image'], // Optional
+        images: { // OR
           paths: ['article.image', 'article.author.picture', 'author.picture'], // Required
           dir: './src/assets/strapi', // Optional, default
           key: 'downloaded', // Optional, default
