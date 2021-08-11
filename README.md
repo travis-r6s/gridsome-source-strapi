@@ -1,11 +1,11 @@
-# @gridsome/source-strapi
+# @travisreynolds/gridsome-source-strapi
 
-> [Strapi](https://strapi.io/) source for Gridsome
+> Forked [Strapi](https://strapi.io/) source plugin for Gridsome, with image downloading
 
 ## Install
 
-- `yarn add @gridsome/source-strapi`
-- `npm install @gridsome/source-strapi`
+- `yarn add @travisreynolds/gridsome-source-strapi`
+- `npm install @travisreynolds/gridsome-source-strapi`
 
 ## Usage
 
@@ -13,17 +13,23 @@
 export default {
   plugins: [
     {
-      use: '@gridsome/source-strapi',
+      use: '@travisreynolds/gridsome-source-strapi',
       options: {
         apiURL: 'http://localhost:1337',
         queryLimit: 1000, // Defaults to 100
-        contentTypes: ['article', 'user'],
+        contentTypes: ['article', 'author'],
         singleTypes: ['impressum'],
         // Possibility to login with a Strapi user,
         // when content types are not publicly available (optional).
         loginData: {
           identifier: '',
           password: ''
+        },
+        images: { // Optional
+          paths: ['article.image', 'article.writer.picture', 'author.picture'], // Required
+          dir: './src/assets/strapi', // Optional, default
+          key: 'downloaded', // Optional, default
+          cache: true // Optional, default
         }
       }
     }
