@@ -4,9 +4,10 @@
   "description": "Forked Strapi source for Gridsome, with image downloading",
   "homepage": "https://github.com/thetre97/gridsome-source-strapi#readme",
   "repository": "https://github.com/thetre97/gridsome-source-strapi",
+  "private": false,
   "main": "index.js",
-  "scripts": {
-    "lint": "eslint . --ext js --fix"
+  "engines": {
+    "node": ">=12"
   },
   "keywords": [
     "gridsome",
@@ -14,8 +15,8 @@
     "gridsome-source",
     "strapi"
   ],
-  "engines": {
-    "node": ">=12"
+  "scripts": {
+    "lint": "eslint . --ext js --fix"
   },
   "dependencies": {
     "axios": "^0.21.1",
