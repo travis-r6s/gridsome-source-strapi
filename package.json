@@ -1,0 +1,30 @@
+{
+  "version": "0.3.0",
+  "name": "@travisreynolds/gridsome-source-strapi",
+  "description": "Forked Strapi source for Gridsome, with image downloading",
+  "homepage": "https://github.com/thetre97/gridsome-source-strapi#readme",
+  "repository": "https://github.com/thetre97/gridsome-source-strapi",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint . --ext js --fix"
+  },
+  "keywords": [
+    "gridsome",
+    "gridsome-plugin",
+    "gridsome-source",
+    "strapi"
+  ],
+  "engines": {
+    "node": ">=12"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "fs-extra": "^10.0.0",
+    "got": "^11.8.2",
+    "lodash": "^4.17.21",
+    "pluralize": "^8.0.0"
+  },
+  "devDependencies": {
+    "eslint-config-travisreynolds-node": "^1.2.0"
+  }
+}
