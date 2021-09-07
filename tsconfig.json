@@ -1,0 +1,15 @@
+{
+  "include": ["./src/*"],
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "CommonJS",
+    "outDir": "./lib",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "skipDefaultLibCheck": true,
+    "skipLibCheck": true
+  }
+}
