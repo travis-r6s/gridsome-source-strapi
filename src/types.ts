@@ -41,6 +41,9 @@ export interface StrapiContentTypeAttribute {
   type: 'integer' | 'string' | 'text' | 'richtext' | 'uid' | 'relation' | 'media' | 'timestamp'
   required?: boolean
   allowedTypes?: ('files' | 'images' | 'videos')[]
+  model: string
+  collection: string
+  relationType: 'manyToOne' | 'oneToMany' | 'oneToOne' | 'manyToMany'
 }
 
 export interface StrapiMedia {

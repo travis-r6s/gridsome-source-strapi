@@ -36,6 +36,8 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
     responseType: 'json'
   })
 
+  const createTypeName = (type: string) => `${prefix}${pascalCase(type)}`
+
   api.loadSource(async (store: GridsomeStore) => {
     const { data } = await strapi.get<StrapiContentTypesResponse>('content-manager/content-types', {
       responseType: 'json',
@@ -84,7 +86,7 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
     }, { concurrency })
 
     await pMap(allContentData.flat(), async content => {
-      const typeName = `${prefix}${pascalCase(content.type.apiID)}`
+      const typeName = createTypeName(content.type.apiID)
       const collection = store.addCollection(typeName)
 
       if (debug) log.info(`Adding ${typeName} to store...`)
@@ -92,6 +94,9 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
       const imageFields = Object.entries(content.type.attributes)
         .filter(([_, attribute]) => attribute.type === 'media' && attribute.allowedTypes?.includes('images'))
         .map(([key]) => key)
+
+      const relationFields = Object.entries(content.type.attributes)
+        .filter(([_, attribute]) => attribute.type === 'relation')
 
       await pMap(content.entries, async entry => {
         const imagesToDownload = imageFields.map(key => {
@@ -108,7 +113,30 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
           }
         }
 
-        collection.addNode(entry)
+        const relations = relationFields.flatMap(([key, attribute]) => {
+          const typeName = createTypeName(attribute.model || attribute.collection)
+
+          const relation = Reflect.get(entry, key)
+          if (!relation || (Array.isArray(relation) && !relation.length)) return []
+
+          if (attribute.relationType === 'oneToOne' || attribute.relationType === 'manyToOne') {
+            return [[key, store.createReference(typeName, relation.id.toString())]]
+          }
+
+          if (attribute.relationType === 'oneToMany' || attribute.relationType === 'manyToMany') {
+            const relations = relation.map((item: { id: string }) => store.createReference(typeName, item.id.toString()))
+            return [[key, relations]]
+          }
+
+          if (debug) log.warn(`Found no relation handler for ${key} on ${typeName} (${attribute.relationType})`)
+
+          return []
+        })
+
+        collection.addNode({
+          ...entry,
+          ...Object.fromEntries(relations)
+        })
       })
 
       if (content.type.kind === 'singleType') {
