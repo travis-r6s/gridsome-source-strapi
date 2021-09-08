@@ -1,8 +1,10 @@
-import got, { Response } from 'got'
 import consola from 'consola'
+import got, { Response } from 'got'
 import pMap from 'p-map'
 import pluralize from 'pluralize'
 import { camelCase, pascalCase } from 'change-case'
+
+// Helpers
 import ImageDownloader from './images'
 
 // Types
