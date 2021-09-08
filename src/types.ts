@@ -1,3 +1,25 @@
+export type GridsomeSchemaResolver = Record<string, {
+  type: string,
+  resolve: (parent: unknown, args: unknown, context: { store: GridsomeStore }) => void
+}>
+
+export interface GridsomeStoreCollection {
+  typeName: string
+  addNode: (node: unknown) => void
+  data: () => unknown[]
+}
+
+export interface GridsomeStore {
+  addCollection: (name: string) => GridsomeStoreCollection
+  getCollection: (name: string) => GridsomeStoreCollection
+  createReference: (typeName: string, id: string) => { id: string, typeName: string }
+  addSchemaResolvers: (resolvers: Record<string, GridsomeSchemaResolver>) => void
+}
+
+export interface GridsomeAPI {
+  loadSource: (store: unknown) => Promise<void>;
+}
+
 export interface StrapiContentTypesResponse {
   data: StrapiContentType[]
 }

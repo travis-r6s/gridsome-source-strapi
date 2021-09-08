@@ -8,8 +8,8 @@ import PQueue from 'p-queue'
 import pMap from 'p-map'
 
 // Types
-import { StrapiMedia } from './types'
-import { GridsomeStoreCollection, SourceConfig } from '.'
+import { StrapiMedia, GridsomeStoreCollection } from './types'
+import { SourceConfig } from '.'
 
 const pipeline = promisify(stream.pipeline)
 
@@ -19,31 +19,37 @@ interface Options {
   images: SourceConfig['images']
 }
 
-function ImageDownloader ({ apiURL, images, collection }: Options): (images: StrapiMedia[]) => Promise<unknown> {
+interface ImageDownloader {
+  download: (images: StrapiMedia[]) => Promise<void[]>
+}
+
+function ImageDownloader ({ apiURL, images, collection }: Options): ImageDownloader {
   const { dir = './src/assets/strapi', cache = true, key = 'downloaded', concurrency = 20 } = images || {}
 
   const queue = new PQueue({ concurrency })
 
   if (images) fs.ensureDirSync(dir)
 
-  return async images => {
-    return pMap(images, async image => {
-      const imageUrl = `${apiURL}${image.url}`
-      const filePath = path.resolve(dir, image.name)
+  return {
+    download: async images => {
+      return pMap(images, async image => {
+        const imageUrl = `${apiURL}${image.url}`
+        const filePath = path.resolve(dir, image.name)
 
-      collection.addNode({
-        ...image,
-        [ key ]: filePath
-      })
+        collection.addNode({
+          ...image,
+          [ key ]: filePath
+        })
 
-      const fileExists = await fs.pathExists(filePath)
-      if (fileExists && cache) return
+        const fileExists = await fs.pathExists(filePath)
+        if (fileExists && cache) return
 
-      await queue.add(() => pipeline(
-        got.stream(imageUrl),
-        fs.createWriteStream(filePath)
-      ))
-    }, { concurrency })
+        await queue.add(() => pipeline(
+          got.stream(imageUrl),
+          fs.createWriteStream(filePath)
+        ))
+      }, { concurrency })
+    }
   }
 }
 

@@ -6,31 +6,9 @@ import { camelCase, pascalCase } from 'change-case'
 import ImageDownloader from './images'
 
 // Types
-import { StrapiContentTypesResponse, StrapiMedia } from './types'
+import { GridsomeAPI, GridsomeStore, StrapiContentTypesResponse } from './types'
 
 const log = consola.withTag('gridsome-source-strapi')
-
-export type GridsomeSchemaResolver = Record<string, {
-  type: string,
-  resolve: (parent: unknown, args: unknown, context: { store: GridsomeStore }) => void
-}>
-
-export interface GridsomeStoreCollection {
-  typeName: string
-  addNode: (node: unknown) => void
-  data: () => unknown[]
-}
-
-export interface GridsomeStore {
-  addCollection: (name: string) => GridsomeStoreCollection
-  getCollection: (name: string) => GridsomeStoreCollection
-  createReference: (typeName: string, id: string) => { id: string, typeName: string }
-  addSchemaResolvers: (resolvers: Record<string, GridsomeSchemaResolver>) => void
-}
-
-export interface GridsomeAPI {
-  loadSource: (store: unknown) => Promise<void>;
-}
 
 export interface SourceConfig {
   apiURL?: string;
@@ -105,21 +83,25 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
       }
     }, { concurrency })
 
-    for await (const content of allContentData.flat()) {
+    await pMap(allContentData.flat(), async content => {
       const typeName = `${prefix}${pascalCase(content.type.apiID)}`
       const collection = store.addCollection(typeName)
+
+      if (debug) log.info(`Adding ${typeName} to store...`)
 
       const imageFields = Object.entries(content.type.attributes)
         .filter(([_, attribute]) => attribute.type === 'media' && attribute.allowedTypes?.includes('images'))
         .map(([key]) => key)
 
-      for await (const entry of content.entries) {
-        const imagesToDownload: (StrapiMedia & { key: string })[] = imageFields.map(key => {
+      await pMap(content.entries, async entry => {
+        const imagesToDownload = imageFields.map(key => {
           const image = Reflect.get(entry, key)
           return { key, ...image }
         })
+
         if (images && imagesToDownload.length) {
-          imageDownloader(imagesToDownload)
+          imageDownloader.download(imagesToDownload)
+
           for (const image of imagesToDownload) {
             const nodeRef = store.createReference(imageCollection.typeName, image.id.toString())
             Reflect.set(entry, image.key, nodeRef)
@@ -127,7 +109,7 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
         }
 
         collection.addNode(entry)
-      }
+      })
 
       if (content.type.kind === 'singleType') {
         store.addSchemaResolvers({
@@ -143,7 +125,7 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
           }
         })
       }
-    }
+    })
   })
 }
 
