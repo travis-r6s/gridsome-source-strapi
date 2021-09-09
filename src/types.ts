@@ -59,6 +59,21 @@ export interface StrapiContentType {
   attributes: Record<string, StrapiContentTypeAttribute>
 }
 
+export interface StrapiComponentsResponse {
+  data: StrapiComponentType[]
+}
+
+export interface StrapiComponentType {
+  uid: string
+  category: string
+  apiId: string
+  schema: {
+    name: string
+    collectionName: string
+    attributes: Record<string, StrapiContentTypeAttribute>
+  }
+}
+
 export interface StrapiContentTypeAttribute {
   type: 'integer' | 'string' | 'text' | 'richtext' | 'uid' | 'relation' | 'media' | 'timestamp' | 'dynamiczone'
   required?: boolean
