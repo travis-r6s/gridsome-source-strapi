@@ -17,7 +17,7 @@
   ],
   "scripts": {
     "develop": "tsc --watch",
-    "build": "tsc build",
+    "build": "tsc",
     "lint": "eslint . --ext js --fix"
   },
   "dependencies": {
