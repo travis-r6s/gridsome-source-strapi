@@ -166,10 +166,7 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
           const unionType = store.schema.createUnionType({
             name: typeName,
             types: types.map(([_name, typeName]) => typeName),
-            resolveType: value => {
-              console.log(`Called!`, typesMap.get(value.__component))
-              return typesMap.get(value.__component)
-            }
+            resolveType: value => typesMap.get(value.__component)
           })
 
           const resolver = [key, {
