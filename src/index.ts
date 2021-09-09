@@ -163,30 +163,9 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
         const dynamics = dynamicFields.map(([key]) => {
           const components: Record<string, string>[] = Reflect.get(entry, key) || []
 
-          const componentNodes = components.flatMap(component => {
-            const componentType = componentTypes.find(type => type.uid === component.__component)
-            if (!componentType) return []
-
+          const componentNodes = components.map(component => {
             const collection = store.addCollection(createTypeName(component.__component))
-
-            if (debug) log.info(`Adding ${typeName} to store...`)
-
-            const imageFields = Object.entries(componentType.attributes)
-              .filter(([_, attribute]) => attribute.type === 'media' && attribute.allowedTypes?.includes('images'))
-              .map(([key]) => key)
-
-            const relationFields = Object.entries(componentType.attributes)
-              .filter(([_, attribute]) => attribute.type === 'relation')
-
-            const dynamicFields = Object.entries(componentType.attributes)
-              .filter(([_, attribute]) => attribute.type === 'dynamiczone')
-
-            console.log('images', imageFields)
-            console.log('relation', relationFields)
-            console.log('dynamic', dynamicFields)
-
-            const node = collection.addNode({ ...component, component: component.__component })
-            return [node]
+            return collection.addNode({ ...component, component: component.__component })
           })
 
           return [key, componentNodes]
