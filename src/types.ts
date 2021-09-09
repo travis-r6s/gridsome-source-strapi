@@ -3,10 +3,30 @@ export type GridsomeSchemaResolver = Record<string, {
   resolve: (parent: unknown, args: unknown, context: { store: GridsomeStore }) => void
 }>
 
+export interface GridsomeStoreCollectionNode extends Record<string, unknown> {
+  id: string
+  internal: Record<string, string>
+}
+
 export interface GridsomeStoreCollection {
   typeName: string
-  addNode: (node: unknown) => void
+  addNode: (node: unknown) => GridsomeStoreCollectionNode
   data: () => unknown[]
+}
+
+export interface GridsomeSchemaFactoryMethods {
+  createUnionType: (config: {
+    name: string
+    types: string[]
+    resolveType: (value: Record<string, string>) => string | undefined
+  }) => { name: string }
+  createObjectType: (config: {
+    name: string
+    fields: Record<string, string>
+    extensions?: Record<string, boolean>,
+    interfaces?: string[]
+    resolve?: (value: Record<string, string>) => string | undefined
+  }) => { name: string }
 }
 
 export interface GridsomeStore {
@@ -14,6 +34,8 @@ export interface GridsomeStore {
   getCollection: (name: string) => GridsomeStoreCollection
   createReference: (typeName: string, id: string) => { id: string, typeName: string }
   addSchemaResolvers: (resolvers: Record<string, GridsomeSchemaResolver>) => void
+  addSchemaTypes: (types: unknown[] | string) => void
+  schema: GridsomeSchemaFactoryMethods
 }
 
 export interface GridsomeAPI {
@@ -38,12 +60,13 @@ export interface StrapiContentType {
 }
 
 export interface StrapiContentTypeAttribute {
-  type: 'integer' | 'string' | 'text' | 'richtext' | 'uid' | 'relation' | 'media' | 'timestamp'
+  type: 'integer' | 'string' | 'text' | 'richtext' | 'uid' | 'relation' | 'media' | 'timestamp' | 'dynamiczone'
   required?: boolean
   allowedTypes?: ('files' | 'images' | 'videos')[]
   model: string
   collection: string
   relationType: 'manyToOne' | 'oneToMany' | 'oneToOne' | 'manyToMany'
+  components: string[]
 }
 
 export interface StrapiMedia {

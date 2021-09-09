@@ -100,6 +100,9 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
       const relationFields = Object.entries(content.type.attributes)
         .filter(([_, attribute]) => attribute.type === 'relation')
 
+      const dynamicFields = Object.entries(content.type.attributes)
+        .filter(([_, attribute]) => attribute.type === 'dynamiczone')
+
       await pMap(content.entries, async entry => {
         const imagesToDownload = imageFields.map(key => {
           const image = Reflect.get(entry, key)
@@ -135,11 +138,53 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
           return []
         })
 
+        const dynamics = dynamicFields.map(([key]) => {
+          const components: Record<string, string>[] = Reflect.get(entry, key) || []
+
+          const componentNodes = components.map(component => {
+            const collection = store.addCollection(createTypeName(component.__component))
+            return collection.addNode({ ...component, component: component.__component })
+          })
+
+          return [key, componentNodes]
+        })
+
         collection.addNode({
           ...entry,
-          ...Object.fromEntries(relations)
+          ...Object.fromEntries(relations),
+          ...Object.fromEntries(dynamics)
         })
       })
+
+      if (dynamicFields.length) {
+        const unionTypes = dynamicFields.map(([key, attribute]) => {
+          const types: [string, string][] = attribute.components.map(name => [name, createTypeName(name)])
+          const typesMap = new Map<string, string>(types)
+
+          const typeName = createTypeName(`${content.type.apiID}${key}`)
+
+          const unionType = store.schema.createUnionType({
+            name: typeName,
+            types: types.map(([_name, typeName]) => typeName),
+            resolveType: value => {
+              console.log(`Called!`, typesMap.get(value.__component))
+              return typesMap.get(value.__component)
+            }
+          })
+
+          const resolver = [key, {
+            type: `[${typeName}]`,
+            resolve: (parent: Record<string, string>) => Reflect.get(parent, key)
+          }]
+
+          return { key, resolver, unionType }
+        })
+
+        store.addSchemaTypes(unionTypes.map(({ unionType }) => unionType))
+        store.addSchemaResolvers({
+          [ typeName ]: Object.fromEntries(unionTypes.map(({ resolver }) => resolver))
+        })
+      }
 
       if (content.type.kind === 'singleType') {
         store.addSchemaResolvers({
