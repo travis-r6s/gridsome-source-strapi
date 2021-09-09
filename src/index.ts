@@ -98,7 +98,7 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
           }
         })
 
-        log.info(`Fetched ${entries.length} entries of the ${type.apiID} type`)
+        if (debug) log.info(`Fetched ${entries.length} entries of the ${type.apiID} type`)
 
         return [{ type, entries }]
       } catch (err) {
