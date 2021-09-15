@@ -6,6 +6,7 @@ import { camelCase, pascalCase } from 'change-case'
 
 // Helpers
 import ImageDownloader from './images'
+import createSchemaTypes from './schema'
 
 // Types
 import { GridsomeAPI, GridsomeStore, StrapiContentTypesResponse, StrapiContentType } from './types'
@@ -18,7 +19,6 @@ export interface SourceConfig {
   limit?: number
   debug?: boolean
   prefix?: string
-  components: boolean
   images: {
     concurrency?: number
     dir?: string
@@ -28,7 +28,7 @@ export interface SourceConfig {
 }
 
 function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
-  const { apiURL, concurrency = 5, limit = 100, debug = false, prefix = 'Strapi', images = false, components = false } = config
+  const { apiURL, concurrency = 5, limit = 100, debug = false, prefix = 'Strapi', images = false } = config
 
   if (!apiURL) throw new Error('Missing gridsome-source-strapi config option `apiURL`.')
   if (!prefix.trim()) throw new Error('Missing gridsome-source-strapi config option `prefix`.')
@@ -56,16 +56,14 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
       throw new Error('Missing permissions.')
     }
 
-    if (components) {
-      try {
-        const { data } = await strapi.get<StrapiContentTypesResponse>('content-manager/components', {
-          responseType: 'json',
-          resolveBodyOnly: true
-        })
-        componentTypes = data
-      } catch (error) {
-        log.error(`Could not fetch component types - ensure you have enabled the 'findcomponents' read permissions under the 'Content Manager' section for the Public user in the Strapi admin: ${apiURL}/admin/settings/users-permissions/roles/`)
-      }
+    try {
+      const { data } = await strapi.get<StrapiContentTypesResponse>('content-manager/components', {
+        responseType: 'json',
+        resolveBodyOnly: true
+      })
+      componentTypes = data
+    } catch (error) {
+      log.error(`Could not fetch component types - ensure you have enabled the 'findcomponents' read permissions under the 'Content Manager' section for the Public user in the Strapi admin: ${apiURL}/admin/settings/users-permissions/roles/`)
     }
 
     // Setup image handling
@@ -76,10 +74,8 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
     const filteredContentTypes = contentTypes.filter(type => type.isDisplayed && type.uid.includes('application'))
     if (!filteredContentTypes) { return log.warn('No displayed content types found in Strapi.') }
 
-    // Create GraphQL types for ech content type
-    for (const type of filteredContentTypes) {
-      console.log(type)
-    }
+    // Create schema types
+    createSchemaTypes({ componentTypes, contentTypes: filteredContentTypes, store, imageCollection, createTypeName })
 
     // Fetch all data for each content type
     const allContentData = await pMap(filteredContentTypes, async type => {
@@ -173,16 +169,8 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
         })
 
         // Create a Union type for each dynamic filed
-        const dynamics = dynamicFields.map(([key]) => {
-          const components: Record<string, string>[] = Reflect.get(entry, key) || []
-
-          const componentNodes = components.map(component => {
-            const collection = store.addCollection(createTypeName(component.__component))
-            return collection.addNode({ ...component, component: component.__component })
-          })
-
-          return [key, componentNodes]
-        })
+        // Should also check for images inside here
+        const dynamics = dynamicFields.map(([key]) => [key, Reflect.get(entry, key) || []])
 
         return collection.addNode({
           ...entry,
