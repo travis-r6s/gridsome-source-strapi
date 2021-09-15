@@ -69,6 +69,7 @@ export interface StrapiContentTypeAttribute {
   component: string
   components: string[]
   repeatable: boolean
+  multiple: boolean
 }
 
 export interface StrapiMedia {
