@@ -1,5 +1,5 @@
 {
-  "version": "0.4.3",
+  "version": "0.4.4",
   "name": "@travisreynolds/gridsome-source-strapi",
   "description": "Forked Strapi source for Gridsome, with image downloading",
   "homepage": "https://github.com/thetre97/gridsome-source-strapi#readme",
