@@ -68,12 +68,20 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
       }
     }
 
+    // Setup image handling
     const imageCollection = store.addCollection(`${prefix}Image`)
     const imageDownloader = ImageDownloader({ apiURL, collection: imageCollection, images })
 
+    // Filter types to only include actual content types, not Strapi types
     const filteredContentTypes = contentTypes.filter(type => type.isDisplayed && type.uid.includes('application'))
     if (!filteredContentTypes) { return log.warn('No displayed content types found in Strapi.') }
 
+    // Create GraphQL types for ech content type
+    for (const type of filteredContentTypes) {
+      console.log(type)
+    }
+
+    // Fetch all data for each content type
     const allContentData = await pMap(filteredContentTypes, async type => {
       const endpoint = type.kind === 'collectionType' ? pluralize(type.apiID) : type.apiID
 
@@ -109,6 +117,7 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
       }
     }, { concurrency })
 
+    // Format content data - downloading images, creating relations, and handling dynamic fields
     await pMap(allContentData.flat(), async content => {
       const typeName = createTypeName(content.type.apiID)
       const collection = store.addCollection(typeName)
@@ -126,11 +135,13 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
         .filter(([_, attribute]) => attribute.type === 'dynamiczone')
 
       await pMap(content.entries, async entry => {
+        // Find image fields
         const imagesToDownload = imageFields.map(key => {
           const image = Reflect.get(entry, key)
           return { key, ...image }
         })
 
+        // Download images, add to store, and create a reference for each one
         if (images && imagesToDownload.length) {
           imageDownloader.download(imagesToDownload)
 
@@ -140,6 +151,7 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
           }
         }
 
+        // Create a reference for each relation
         const relations = relationFields.flatMap(([key, attribute]) => {
           const typeName = createTypeName(attribute.model || attribute.collection)
 
@@ -160,6 +172,7 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
           return []
         })
 
+        // Create a Union type for each dynamic filed
         const dynamics = dynamicFields.map(([key]) => {
           const components: Record<string, string>[] = Reflect.get(entry, key) || []
 
@@ -171,13 +184,14 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
           return [key, componentNodes]
         })
 
-        collection.addNode({
+        return collection.addNode({
           ...entry,
           ...Object.fromEntries(relations),
           ...Object.fromEntries(dynamics)
         })
       })
 
+      // Create Union type and add to schema for each dynamic field
       if (dynamicFields.length) {
         const unionTypes = dynamicFields.map(([key, attribute]) => {
           const types: [string, string][] = attribute.components.map(name => [name, createTypeName(name)])
@@ -205,6 +219,7 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
         })
       }
 
+      // If we have a singleton, create a resolver to allow getting first (and only) entry by default
       if (content.type.kind === 'singleType') {
         store.addSchemaResolvers({
           Query: {
