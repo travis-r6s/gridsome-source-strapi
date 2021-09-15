@@ -134,16 +134,22 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
         // Find image fields
         const imagesToDownload = imageFields.map(key => {
           const image = Reflect.get(entry, key)
-          return { key, ...image }
+          return { key, image }
         })
 
         // Download images, add to store, and create a reference for each one
         if (images && imagesToDownload.length) {
           imageDownloader.download(imagesToDownload)
 
-          for (const image of imagesToDownload) {
+          for (const { key, image } of imagesToDownload) {
+            if (Array.isArray(image)) {
+              const references = image.map(({ id }) => store.createReference(imageCollection.typeName, id.toString()))
+              Reflect.set(entry, key, references)
+              continue
+            }
+
             const nodeRef = store.createReference(imageCollection.typeName, image.id.toString())
-            Reflect.set(entry, image.key, nodeRef)
+            Reflect.set(entry, key, nodeRef)
           }
         }
 
@@ -170,7 +176,42 @@ function StrapiSource (api: GridsomeAPI, config: SourceConfig): void {
 
         // Create a Union type for each dynamic filed
         // Should also check for images inside here
-        const dynamics = dynamicFields.map(([key]) => [key, Reflect.get(entry, key) || []])
+        const dynamics = dynamicFields.map(([key]) => {
+          const components: ({ __component: string } & Record<string, string>)[] = Reflect.get(entry, key) || []
+          for (const component of components) {
+            const matchingType = componentTypes.find(type => type.uid === component.__component)
+            if (!matchingType) {
+              log.warn(`Could not find a matching component type for ${component.__component}`)
+              return [key, components]
+            }
+
+            const imageFields = Object.entries(matchingType.attributes)
+              .filter(([_, attribute]) => attribute.type === 'media' && attribute.allowedTypes?.includes('images'))
+              .map(([key]) => key)
+
+            const imagesToDownload = imageFields.flatMap(key => {
+              const image = Reflect.get(component, key)
+              return { key, image }
+            })
+
+            // Download images, add to store, and create a reference for each one
+            if (images && imagesToDownload.length) {
+              imageDownloader.download(imagesToDownload)
+
+              for (const { key, image } of imagesToDownload) {
+                if (Array.isArray(image)) {
+                  const references = image.map(({ id }) => store.createReference(imageCollection.typeName, id.toString()))
+                  Reflect.set(component, key, references)
+                  continue
+                }
+
+                const nodeRef = store.createReference(imageCollection.typeName, image.id.toString())
+                Reflect.set(component, key, nodeRef)
+              }
+            }
+          }
+          return [key, components]
+        })
 
         return collection.addNode({
           ...entry,

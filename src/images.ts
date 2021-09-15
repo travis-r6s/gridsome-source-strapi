@@ -20,7 +20,7 @@ interface Options {
 }
 
 interface ImageDownloader {
-  download: (images: StrapiMedia[]) => Promise<void[]>
+  download: (images: { key: string, image: StrapiMedia | StrapiMedia[] }[]) => Promise<void[]>
 }
 
 function ImageDownloader ({ apiURL, images, collection }: Options): ImageDownloader {
@@ -32,14 +32,19 @@ function ImageDownloader ({ apiURL, images, collection }: Options): ImageDownloa
 
   return {
     download: async images => {
-      return pMap(images, async image => {
+      const flattenedImages = images.flatMap(({ image }) => image)
+
+      return pMap(flattenedImages, async image => {
         const imageUrl = `${apiURL}${image.url}`
         const filePath = path.resolve(dir, image.name)
 
-        collection.addNode({
-          ...image,
-          [ key ]: filePath
-        })
+        const exists = collection.getNodeById(image.id.toString())
+        if (!exists) {
+          collection.addNode({
+            ...image,
+            [ key ]: filePath
+          })
+        }
 
         const fileExists = await fs.pathExists(filePath)
         if (fileExists && cache) return

@@ -11,6 +11,7 @@ export interface GridsomeStoreCollectionNode extends Record<string, unknown> {
 export interface GridsomeStoreCollection {
   typeName: string
   addNode: (node: unknown) => GridsomeStoreCollectionNode
+  getNodeById: (id: string) => GridsomeStoreCollectionNode | null
   data: () => unknown[]
 }
 
