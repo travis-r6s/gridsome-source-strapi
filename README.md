@@ -18,8 +18,6 @@ module.exports = {
         apiURL: 'http://localhost:1337',
         prefix: 'Strapi' // Default is 'Strapi'
         debug: true // Adds verbose logs
-
-        components: true // Defaults to false
         images: true // Use all defaults
         images: { // OR
           dir: './src/assets/strapi', // Optional, default
@@ -67,23 +65,6 @@ There are some additional options if you need, to specify where the images shoul
 This plugin also supports Strapi's Dynamic Zones feature - it will turn the field into a [Union type](https://graphql.org/learn/schema/#union-types), to allow you to use GraphQL to query the available components inside the dynamic zone. You can use the [GraphQL explorer](http://localhost:8080/___explorer) to check what types you can query.
 
 For example, if there is a `Page` type in Strapi, which has a Dynamic Zone under the key `content` with two components `Hero` and `FeaturedPost`:
-
-`gridsome.config.js`
-```js
-module.exports = {
-  // ...
-  plugins: [
-    {
-      use: '@travisreynolds/gridsome-source-strapi',
-      options: {
-        // ...
-        // Make sure to enable components support
-        components: true
-      }
-    }
-  ]
-}
-```
 
 `StrapiPage.vue`
 
