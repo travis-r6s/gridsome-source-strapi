@@ -75,7 +75,7 @@ export interface StrapiComponentType {
 }
 
 export interface StrapiContentTypeAttribute {
-  type: 'integer' | 'string' | 'text' | 'richtext' | 'uid' | 'relation' | 'media' | 'timestamp' | 'dynamiczone'
+  type: 'integer' | 'string' | 'text' | 'richtext' | 'uid' | 'relation' | 'media' | 'timestamp' | 'dynamiczone' | 'component'
   required?: boolean
   allowedTypes?: ('files' | 'images' | 'videos')[]
   model: string
