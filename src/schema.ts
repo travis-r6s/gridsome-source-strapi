@@ -25,7 +25,7 @@ interface Options {
 function createSchemaTypes ({ componentTypes, contentTypes, store, imageCollection, createTypeName }: Options): void {
   const createFieldTypes = (type: StrapiContentType) => Object.fromEntries(Object.entries(type.attributes).flatMap(([key, attributes]) => {
     if (key === 'id') return [[key, 'ID!']]
-    if (attributes.type === 'media') return [[key, imageCollection.typeName]]
+    if (attributes.type === 'media') return [[key, attributes.multiple ? `[${imageCollection.typeName}]` : imageCollection.typeName]]
     if (attributes.type === 'component') return [[key, attributes.repeatable ? `[${createTypeName(attributes.component)}]` : createTypeName(attributes.component)]]
     if (attributes.type === 'relation') return []
     if (attributes.type === 'dynamiczone') return []
