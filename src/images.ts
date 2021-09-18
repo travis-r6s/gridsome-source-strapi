@@ -38,8 +38,8 @@ function ImageDownloader ({ apiURL, images, collection }: Options): ImageDownloa
         const imageUrl = `${apiURL}${image.url}`
         const filePath = path.resolve(dir, image.name)
 
-        const exists = collection.getNodeById(image.id.toString())
-        if (!exists) {
+        const nodeExists = collection.getNodeById(image.id.toString())
+        if (!nodeExists) {
           collection.addNode({
             ...image,
             [ key ]: filePath
