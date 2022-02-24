@@ -18,7 +18,7 @@ const scalarTypeMap = new Map([
     ['float', 'Float'],
     ['email', 'String'],
     ['password', 'String'],
-    ['json', 'String']
+    ['json', 'JSON']
 ])
 
 interface Options {
