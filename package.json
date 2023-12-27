@@ -2,8 +2,8 @@
   "version": "0.4.4",
   "name": "@travisreynolds/gridsome-source-strapi",
   "description": "Forked Strapi source for Gridsome, with image downloading",
-  "homepage": "https://github.com/thetre97/gridsome-source-strapi#readme",
-  "repository": "https://github.com/thetre97/gridsome-source-strapi",
+  "homepage": "https://github.com/travis-r6s/gridsome-source-strapi#readme",
+  "repository": "https://github.com/travis-r6s/gridsome-source-strapi",
   "private": false,
   "main": "lib/index.js",
   "files": [
